@@ -1,0 +1,10 @@
+# MCP Servers
+
+## wechat-search
+command: python
+args: ["/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/mcp_server.py"]
+
+注意:
+1. 将上面的路径替换为你的实际绝对路径
+2. 如果使用虚拟环境,command 应该是: /Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/.venv/bin/python
+3. 复制此文件为 CLAUDE.md 后生效
