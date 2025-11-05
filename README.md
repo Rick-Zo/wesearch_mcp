@@ -2,6 +2,16 @@
 
 一款基于 Model Context Protocol (MCP) 的微信公众号文章搜索工具,帮助 AI 助手快速搜索和获取微信公众号文章内容。
 
+> 🚀 **新用户?** 查看 [Claude Code使用指南.md](./Claude-Code使用指南.md) 快速上手!
+
+## 📚 文档导航
+
+- **新手入门**: [Claude-Code使用指南.md](./Claude-Code使用指南.md) - 5分钟快速开始
+- **快速开始**: [快速开始.md](./快速开始.md) - 配置和基础使用
+- **测试报告**: [测试报告.md](./测试报告.md) - 功能测试结果
+- **更新日志**: [更新日志.md](./更新日志.md) - 版本历史和改进
+- **完整文档**: 继续阅读本文档
+
 ## ✨ 特性
 
 - 🔍 **智能搜索**: 支持关键词或自然语言搜索微信公众号文章
@@ -77,71 +87,175 @@ pip install -r requirements.txt
 }
 ```
 
-#### Claude Code (CLI)
+#### Claude Code (CLI) - 推荐方法
 
-在项目目录下创建或编辑 `CLAUDE.md` 文件:
+使用 Claude Code 内置的 MCP 管理命令:
 
-```markdown
-# MCP Servers
+##### 用户级配置(推荐)
 
-## wechat-search
-command: python
-args: ["/path/to/wechat-mcp-summarizer/mcp_server.py"]
+```bash
+claude mcp add -s user wechat-search \
+  "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/.venv/bin/python" \
+  "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/mcp_server.py"
 ```
 
-或者在全局配置 `~/.config/claude/settings.json` 中添加:
-
-```json
-{
-  "mcpServers": {
-    "wechat-search": {
-      "command": "python",
-      "args": ["/absolute/path/to/wechat-mcp-summarizer/mcp_server.py"]
-    }
-  }
-}
+**验证配置**:
+```bash
+claude mcp list
+# 应该看到: wechat-search: /path/to/python /path/to/mcp_server.py
 ```
 
-**注意**: 
+**说明**:
+- 用户级配置在所有项目中生效
+- 使用虚拟环境的 Python,确保依赖已安装
 - 必须使用绝对路径
-- 确保 Python 环境中已安装所有依赖
-- 如果使用虚拟环境,可以指定虚拟环境的 Python:
-  ```json
-  {
-    "mcpServers": {
-      "wechat-search": {
-        "command": "/absolute/path/to/.venv/bin/python",
-        "args": ["/absolute/path/to/mcp_server.py"]
-      }
-    }
-  }
-  ```
 
-### 3. 重启客户端
+##### 项目级配置
 
-- **Claude Desktop**: 完全退出后重新打开
-- **VS Code**: 重新加载窗口或重启 VS Code
-- **Claude Code**: 无需重启,配置文件会自动加载
+如果只想在特定项目中使用,在项目目录下:
+
+```bash
+cd ~/my-project
+claude mcp add -s project wechat-search \
+  "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/.venv/bin/python" \
+  "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/mcp_server.py"
+```
+
+##### 其他有用命令
+
+```bash
+# 列出所有 MCP 服务器
+claude mcp list
+
+# 查看特定服务器详情
+claude mcp get wechat-search
+
+# 删除 MCP 服务器
+claude mcp remove -s user wechat-search
+```
+
+### 3. 启动 Claude Code
+
+在任意目录打开终端:
+
+```bash
+# 直接启动 Claude Code
+claude
+
+# 或指定工作目录
+claude /path/to/your/project
+```
+
+Claude Code 启动时会自动加载 MCP 配置,你会在启动信息中看到:
+
+```
+✓ Connected to MCP server wechat-search
+```
+
+### 4. 验证 MCP 已加载
+
+在 Claude Code 中输入:
+
+```
+> 列出可用的工具
+```
+
+或直接测试:
+
+```
+> 搜索关于AI的微信文章
+```
+
+如果 MCP 正常工作,Claude 会自动调用 `search_wechat_articles` 工具。
 
 ## 💡 使用示例
 
 ### 在 Claude Code 中使用
 
-启动 Claude Code 后,可以直接使用自然语言调用工具:
+#### 第一步:启动 Claude Code
 
 ```bash
-# 在终端启动 Claude Code
+# 在终端启动
 claude
 
-# 在 Claude Code 中输入
-> 帮我搜索关于人工智能在医疗领域应用的微信文章并总结
+# 或在特定目录启动
+cd ~/my-project
+claude
 ```
 
-Claude Code 会自动:
-1. 识别需要调用 `search_wechat_articles` 工具
-2. 使用合适的参数执行搜索
-3. 获取文章内容后进行分析和总结
-4. 返回结构化的总结结果
+#### 第二步:自然语言调用
+
+Claude Code 会自动识别何时需要调用 MCP 工具,你只需要用自然语言描述需求:
+
+##### 示例 1: 基础搜索
+
+```
+> 搜索关于人工智能的微信文章
+```
+
+Claude 会:
+1. 自动调用 `search_wechat_articles("人工智能", count=3)`
+2. 获取 3 篇文章的完整内容
+3. 分析并返回总结
+
+##### 示例 2: 指定文章数量
+
+```
+> 搜索关于"大模型应用"的微信文章,获取 5 篇
+```
+
+Claude 会搜索 5 篇文章并分析。
+
+##### 示例 3: 带分析角度
+
+```
+> 搜索关于区块链技术的文章,从监管角度分析
+```
+
+Claude 会获取文章后,专门从监管角度进行分析。
+
+##### 示例 4: 多轮对话
+
+```
+> 搜索关于Claude MCP的文章
+
+[Claude 返回搜索结果和分析]
+
+> 这些文章主要讨论了哪些应用场景?
+
+[Claude 基于已获取的内容深入分析]
+
+> 第二篇文章的公众号是什么?
+
+[Claude 直接从结果中提取信息]
+```
+
+#### 第三步:查看结果
+
+Claude 会返回类似这样的内容:
+
+```markdown
+根据搜索到的 3 篇微信文章,我为你总结如下:
+
+## 主要观点
+1. [总结要点1]
+2. [总结要点2]
+...
+
+## 文章来源
+1. **标题**: XXX
+   - 公众号: XXX
+   - 链接: https://mp.weixin.qq.com/...
+   
+2. **标题**: YYY
+   - 公众号: YYY
+   - 链接: https://mp.weixin.qq.com/...
+```
+
+你可以:
+- 点击链接查看原文
+- 继续追问细节
+- 要求从不同角度分析
 
 ### 在 Claude Desktop 中使用
 
@@ -248,10 +362,67 @@ wechat-mcp-summarizer/
 
 ### MCP 工具未显示
 
-1. 检查配置文件路径是否正确
-2. 确认 Python 路径和脚本路径使用绝对路径
-3. 重启 MCP 客户端
-4. 查看客户端日志文件
+#### 检查配置文件
+
+1. **验证配置文件位置**
+
+   项目级配置:
+   ```bash
+   # 检查当前目录是否有 CLAUDE.md
+   ls -la CLAUDE.md
+   ```
+
+   全局配置:
+   ```bash
+   # 检查全局配置文件
+   cat ~/.config/claude/settings.json
+   ```
+
+2. **验证路径是否正确**
+
+   ```bash
+   # 测试 Python 路径
+   /Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/.venv/bin/python --version
+   
+   # 测试脚本路径
+   ls -la "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP/mcp_server.py"
+   ```
+
+3. **检查依赖是否安装**
+
+   ```bash
+   cd "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP"
+   .venv/bin/pip list | grep -E "mcp|httpx|lxml"
+   ```
+
+   应该看到:
+   ```
+   httpx          0.28.1
+   lxml           6.0.2
+   mcp            1.20.0
+   ```
+
+#### 查看 Claude Code 日志
+
+启动 Claude Code 时观察输出:
+
+```bash
+claude
+
+# 正常情况应该看到:
+# ✓ Connected to MCP server wechat-search
+```
+
+如果看到错误信息,根据提示修复。
+
+#### 手动测试 MCP 服务
+
+```bash
+cd "/Users/rick/Documents/AI产品开发/微信文章搜索摘要MCP"
+.venv/bin/python mcp_server.py
+```
+
+如果有错误会立即显示。按 Ctrl+C 退出。
 
 ### 搜索无结果
 
@@ -261,10 +432,17 @@ wechat-mcp-summarizer/
 
 ### 文章内容抓取失败
 
-⚠️ **重要说明**: 由于搜狗和微信的反爬虫机制,直接抓取文章完整内容可能会失败。在这种情况下:
-- MCP 仍会返回文章标题、公众号名称、摘要和链接
-- 用户可以通过链接手动访问原文
-- 建议使用时关注搜索和链接获取功能,而不完全依赖自动内容抓取
+✅ **v1.1更新**: 已改进URL提取算法,文章内容抓取成功率大幅提升!
+
+参考了 [fancyboi999/weixin_search_mcp](https://github.com/fancyboi999/weixin_search_mcp) 项目的实现方法:
+- 从JavaScript代码中提取URL片段并拼接
+- 增强HTTP请求头模拟真实浏览器
+- 传递Referer链路追踪
+
+如仍遇到抓取失败:
+- 可能是反爬虫临时拦截,稍后重试
+- MCP 仍会返回文章标题、公众号、摘要和链接
+- 用户可通过链接手动访问原文
 
 ### 文章内容不完整
 

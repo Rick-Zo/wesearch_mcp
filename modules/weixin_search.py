@@ -16,9 +16,12 @@ class WeixinSearch:
         
         headers = {
             "User-Agent": config.USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Referer": "https://weixin.sogou.com/"
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Pragma": "no-cache",
+            "Referer": f"https://weixin.sogou.com/weixin?query={quote(query)}"
         }
         
         try:
@@ -63,6 +66,7 @@ class WeixinSearch:
                         results.append({
                             'title': title,
                             'url': final_url,
+                            'sogou_url': sogou_url,
                             'gzh_name': gzh_name,
                             'abstract': abstract
                         })
@@ -86,18 +90,43 @@ class WeixinSearch:
     @staticmethod
     async def _get_real_url(sogou_url: str, headers: dict, client: httpx.AsyncClient) -> Optional[str]:
         try:
-            response = await client.get(sogou_url, headers=headers, follow_redirects=False)
+            if 'mp.weixin.qq.com' in sogou_url:
+                return sogou_url
+            
+            response = await client.get(sogou_url, headers=headers, follow_redirects=True)
             
             if response.status_code in [301, 302]:
                 location = response.headers.get('Location')
                 if location and 'mp.weixin.qq.com' in location:
                     return location
             
-            if 'mp.weixin.qq.com' in sogou_url:
-                return sogou_url
-            
-            response = await client.get(sogou_url, headers=headers, follow_redirects=True)
             content = response.text
+            
+            start_index = content.find("url += '")
+            if start_index != -1:
+                url_parts = []
+                search_start = start_index
+                
+                while True:
+                    part_start = content.find("url += '", search_start)
+                    if part_start == -1:
+                        break
+                    part_end = content.find("'", part_start + len("url += '"))
+                    if part_end == -1:
+                        break
+                    part = content[part_start + len("url += '"):part_end]
+                    url_parts.append(part)
+                    search_start = part_end + 1
+                
+                if url_parts:
+                    full_url = ''.join(url_parts).replace("@", "")
+                    if full_url:
+                        if not full_url.startswith('http'):
+                            real_url = "https://mp." + full_url
+                        else:
+                            real_url = full_url
+                        if 'mp.weixin.qq.com' in real_url:
+                            return real_url
             
             pattern = r'var url = ["\']([^"\']+)["\']'
             match = re.search(pattern, content)

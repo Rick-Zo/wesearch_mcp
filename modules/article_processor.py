@@ -14,7 +14,8 @@ class ArticleProcessor:
         
         async def fetch_with_semaphore(article: Dict[str, str]) -> Dict[str, str]:
             async with semaphore:
-                content = await ArticleProcessor._fetch_single(article['url'])
+                referer = article.get('sogou_url', '')
+                content = await ArticleProcessor._fetch_single(article['url'], referer=referer)
                 return {
                     'title': article['title'],
                     'url': article['url'],
@@ -37,12 +38,17 @@ class ArticleProcessor:
         return valid_articles
     
     @staticmethod
-    async def _fetch_single(url: str) -> str:
+    async def _fetch_single(url: str, referer: str = None) -> str:
         headers = {
             "User-Agent": config.USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
         }
+        
+        if referer:
+            headers["Referer"] = referer
         
         try:
             async with httpx.AsyncClient(timeout=config.REQUEST_TIMEOUT, follow_redirects=True) as client:
